@@ -12,7 +12,7 @@ require 'dynamic/record/base'
 require 'dynamic/record/association'
 require 'dynamic/record/query_methods'
 
-if ActiveRecord::Base.connection.data_source_exists? 'dynamic_schemas'
+if (ActiveRecord::Base.connection.data_source_exists? 'dynamic_schemas' rescue nil)
 
   require 'dynamic/schema/base'
   require 'dynamic/schema/klass'
