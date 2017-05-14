@@ -37,20 +37,21 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.string :type, index: true
       t.datetime :deleted_at, index: true
     end
-      
-    reversible do |dir|
-      dir.up do
-        Dynamic::Schema::Klass.create_translation_table! :human_name => :string
-        Dynamic::Schema::Attribute::Base.create_translation_table! :human_name => :string
-        Dynamic::Schema::Association::Base.create_translation_table! :human_name => :string
-      end
-            
-      dir.down do
-        Dynamic::Schema::Klass.drop_translation_table!
-        Dynamic::Schema::Attribute::Base.drop_translation_table!
-        Dynamic::Schema::Association::Base.drop_translation_table!
-      end
-    end
+# 
+#     reversible do |dir|
+#       dir.up do
+#         Dynamic::Schema::Klass.create_translation_table! :human_name => :string
+#         Dynamic::Schema::Attribute::Base.create_translation_table! :human_name => :string
+#         Dynamic::Schema::Association::Base.create_translation_table! :human_name => :string
+#       end
+#             
+#       dir.down do
+#         Dynamic::Schema::Klass.drop_translation_table!
+#         Dynamic::Schema::Attribute::Base.drop_translation_table!
+#         Dynamic::Schema::Association::Base.drop_translation_table!
+#       end
+#     end
+
   end
 
 end
