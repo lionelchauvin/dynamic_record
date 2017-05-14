@@ -1,7 +1,3 @@
-require 'dynamic/schema/installer'
-
-ActiveRecord::Schema.define do
-  self.verbose = false
-
-  eval Dynamic::Schema::Installer.migration_content
-end
+ActiveRecord::Schema.verbose = false
+load 'lib/generators/dynamic_record/templates/create_dynamic_schema.rb'
+CreateDynamicSchema.new.change

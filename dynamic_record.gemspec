@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'dynamic/version'
+require 'version'
 
 Gem::Specification.new do |spec|
   spec.name          = "dynamic_record"
-  spec.version       = Dynamic::VERSION
+  spec.version       = DynamicRecord::VERSION
   spec.authors       = ["Lionel Chauvin"]
   spec.email         = ["megabigbug@yahoo.fr"]
 

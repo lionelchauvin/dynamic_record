@@ -1,10 +1,15 @@
 require 'rails/generators'
+require 'rails/generators/migration'
+
 module DynamicRecord
   class InstallGenerator < Rails::Generators::Base
-    desc "Install migrations for dynamic schema tables"
+    include Rails::Generators::Migration
+    extend ActiveRecord::Generators::Migration
 
-    def self.source_root
-      @source_root ||= File.join(File.dirname(__FILE__), 'templates')
+    source_root File.expand_path('../templates', __FILE__)
+
+    def create_model_file
+      migration_template "create_dynamic_schema.rb", "db/migrate/create_dynamic_schema.rb"
     end
 
   end
