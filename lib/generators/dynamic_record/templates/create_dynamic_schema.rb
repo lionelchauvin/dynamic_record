@@ -1,14 +1,15 @@
 class CreateDynamicSchema < ActiveRecord::Migration[5.0]
 
   def change
-    create_table :dynamic_record_schemas do |t|
+
+    create_table :dynamic_schemas do |t|
       t.string :permalink, index: true
       t.string :name
       t.datetime :updated_at
       t.datetime :deleted_at, index: true
     end
 
-    create_table :dynamic_record_klasses do |t|
+    create_table :dynamic_schema_klasses do |t|
       t.string :permalink, index: true
       t.string :name
       t.string :const_table_name
@@ -17,7 +18,7 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.datetime :deleted_at, index: true
     end
 
-    create_table :dynamic_record_attributes do |t|
+    create_table :dynamic_schema_attributes do |t|
       t.string :permalink, index: true
       t.string :name
       t.integer :column
@@ -27,30 +28,34 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.datetime :deleted_at, index: true
     end
         
-    create_table :dynamic_record_associations do |t|
+    create_table :dynamic_schema_associations do |t|
       t.string :permalink, index: true
       t.string :name
       t.belongs_to :schema, index: true
       t.belongs_to :target_klass, index: true
       t.belongs_to :owner_klass, index: true
-      t.references :inverse_of, polymorphic: true, index: {name: 'index_dynamic_record_associations_on_inverse_of_type_and_id'}
+      t.references :inverse_of, polymorphic: true, index: {name: 'index_dynamic_schema_associations_on_inverse_of_type_and_id'}
       t.string :type, index: true
       t.datetime :deleted_at, index: true
     end
-# 
-#     reversible do |dir|
-#       dir.up do
-#         Dynamic::Schema::Klass.create_translation_table! :human_name => :string
-#         Dynamic::Schema::Attribute::Base.create_translation_table! :human_name => :string
-#         Dynamic::Schema::Association::Base.create_translation_table! :human_name => :string
-#       end
-#             
-#       dir.down do
-#         Dynamic::Schema::Klass.drop_translation_table!
-#         Dynamic::Schema::Attribute::Base.drop_translation_table!
-#         Dynamic::Schema::Association::Base.drop_translation_table!
-#       end
-#     end
+
+    create_table :dynamic_schema_klass_translations  do |t|
+      t.integer :dynamic_schema_klass_id, index: {name: 'index_dynamic_schema_klass_translations_klass_id'}
+      t.string :human_name
+      t.string :locale
+    end
+
+    create_table :dynamic_schema_attribute_translations  do |t|
+      t.integer :dynamic_schema_attribute_id, index: {name: 'index_dynamic_schema_klass_translations_attribute_id'}
+      t.string :human_name
+      t.string :locale
+    end
+
+    create_table :dynamic_schema_association_translations  do |t|
+      t.integer :dynamic_schema_association_id, index: {name: 'index_dynamic_schema_klass_translations_association_id'}
+      t.string :human_name
+      t.string :locale
+    end
 
   end
 

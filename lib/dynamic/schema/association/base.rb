@@ -5,7 +5,7 @@ module Dynamic
 
         acts_as_paranoid
 
-        self.table_name = 'dynamic_record_associations'
+        self.table_name = 'dynamic_schema_associations'
 
         belongs_to :owner_klass, inverse_of: :associations, class_name: 'Dynamic::Schema::Klass', foreign_key: :owner_klass_id
         belongs_to :target_klass, inverse_of: :associations_as_target, class_name: 'Dynamic::Schema::Klass', foreign_key: :target_klass_id

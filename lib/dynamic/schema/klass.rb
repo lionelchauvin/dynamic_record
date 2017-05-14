@@ -5,7 +5,7 @@ module Dynamic
 
       acts_as_paranoid
 
-      self.table_name = 'dynamic_record_klasses'
+      self.table_name = 'dynamic_schema_klasses'
 
       belongs_to :schema, inverse_of: :klasses, class_name: 'Dynamic::Schema::Base', touch: true
       has_many :attrs, inverse_of: :klass, class_name: 'Dynamic::Schema::Attribute::Base', dependent: :destroy

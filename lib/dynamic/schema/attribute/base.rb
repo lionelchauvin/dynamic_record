@@ -5,7 +5,7 @@ module Dynamic
 
         acts_as_paranoid
 
-        self.table_name = 'dynamic_record_attributes'
+        self.table_name = 'dynamic_schema_attributes'
 
         belongs_to :klass, inverse_of: :attrs, touch: true
 

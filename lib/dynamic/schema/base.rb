@@ -2,7 +2,7 @@ module Dynamic
   module Schema
     class Base < ActiveRecord::Base
 
-      self.table_name = 'dynamic_record_schemas'
+      self.table_name = 'dynamic_schemas'
 
       has_many :klasses, inverse_of: :schema, class_name: 'Dynamic::Schema::Klass', foreign_key: :schema_id, dependent: :destroy
       has_many :associations, inverse_of: :schema, class_name: 'Dynamic::Schema::Association::Base', foreign_key: :schema_id, dependent: :destroy

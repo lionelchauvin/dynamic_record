@@ -12,14 +12,18 @@ require 'dynamic/record/base'
 require 'dynamic/record/association'
 require 'dynamic/record/query_methods'
 
-require 'dynamic/schema/base'
-require 'dynamic/schema/klass'
+if ActiveRecord::Base.connection.data_source_exists? 'dynamic_schemas'
 
-require 'dynamic/schema/attribute/base'
-Dir["#{File.dirname(__FILE__)}/dynamic/schema/attribute/*.rb"].each {|file| require file }
+  require 'dynamic/schema/base'
+  require 'dynamic/schema/klass'
 
-require 'dynamic/schema/association/base'
-Dir["#{File.dirname(__FILE__)}/dynamic/schema/association/*.rb"].each {|file| require file }
+  require 'dynamic/schema/attribute/base'
+  Dir["#{File.dirname(__FILE__)}/dynamic/schema/attribute/*.rb"].each {|file| require file }
+
+  require 'dynamic/schema/association/base'
+  Dir["#{File.dirname(__FILE__)}/dynamic/schema/association/*.rb"].each {|file| require file }
+
+end
 
 module Dynamic
 end
