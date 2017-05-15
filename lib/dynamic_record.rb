@@ -12,7 +12,7 @@ require 'dynamic/record/base'
 require 'dynamic/record/association'
 require 'dynamic/record/query_methods'
 
-if (ActiveRecord::Base.connection.data_source_exists? 'dynamic_schemas' rescue nil)
+#if (ActiveRecord::Base.connection.data_source_exists? 'dynamic_schemas' rescue nil)
 
   require 'dynamic/schema/base'
   require 'dynamic/schema/klass'
@@ -23,7 +23,7 @@ if (ActiveRecord::Base.connection.data_source_exists? 'dynamic_schemas' rescue n
   require 'dynamic/schema/association/base'
   Dir["#{File.dirname(__FILE__)}/dynamic/schema/association/*.rb"].each {|file| require file }
 
-end
+#end
 
 module Dynamic
 end
