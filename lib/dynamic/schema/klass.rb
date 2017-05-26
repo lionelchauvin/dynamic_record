@@ -26,7 +26,7 @@ module Dynamic
           validates_uniqueness_of :name, scope: :schema_id
           validates_presence_of :name
 
-          acts_as_permalink from: :human_name, scope: :schema_id
+          acts_as_permalink from: :name, scope: :schema_id
           validates_presence_of :permalink
         end
 
