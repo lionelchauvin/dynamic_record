@@ -111,7 +111,7 @@ module Dynamic
         def create_translation_table
           return unless const_table_name.present? && !self.class.connection.data_sources.include?(const_translation_table_name)
 
-          self.class.connection.create_table("#{const_table_name}_translations") do |t|
+          self.class.connection.create_table(const_translation_table_name) do |t|
             t.integer :record_id
             t.index :record_id, name: "index_d_translations_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}"
             Attribute::Translatable::Base::PRIMITIVE_SUBCLASS_NAMES.each do |n|
