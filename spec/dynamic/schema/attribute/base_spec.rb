@@ -3,10 +3,12 @@ require 'spec_helper'
 describe Dynamic::Schema::Attribute::Base do
   before(:each) do
     @schema = Dynamic::Schema::Base.create!(name: 'earth')
-    @klass = @schema.klasses.create!(human_name_fr: 'Personne', human_name_en: 'Person')
   end
 
   describe 'naming' do
+    before(:each) do
+      @klass = @schema.klasses.create!(human_name_fr: 'Personne', human_name_en: 'Person')
+    end
 
     describe 'create with a human_name' do
 
@@ -36,6 +38,9 @@ describe Dynamic::Schema::Attribute::Base do
   end
 
   describe 'database management' do
+    before(:each) do
+      @klass = @schema.klasses.create!(human_name_fr: 'Personne', human_name_en: 'Person')
+    end
 
     describe 'create attribute' do
       before(:each) do

@@ -17,9 +17,8 @@ module Dynamic
       module Naming; extend ActiveSupport::Concern
 
         included do
-          Globalize.fallbacks = {:en => [:en, :fr], :fr => [:fr, :en]}
-          translates :human_name, :fallbacks_for_empty_translations => true
-          globalize_accessors locales: [:fr, :en], attributes: [:human_name] # human_name_fr, #human_name_en
+          translates :human_name, fallbacks_for_empty_translations: true
+          globalize_accessors # human_name_fr, #human_name_en
 
           before_validation :compute_human_name_en_from_name
 
@@ -44,7 +43,8 @@ module Dynamic
 
         def compute_name_from_human_name
           return unless (self.name.blank? && self.human_name.present?) || self.human_name_changed?
-          self.name = self.human_name.titleize.gsub(/\s/, '')
+          n = self.human_name_en.present? ? self.human_name_en : self.human_name
+          self.name = n.titleize.gsub(/\s/, '')
         end
 
       end
@@ -57,12 +57,19 @@ module Dynamic
           validates_presence_of :const_table_name
 
           after_create :create_table
+          after_create :create_translation_table
+
           before_destroy :rename_table_for_destruction
+          before_destroy :rename_translation_table_for_destruction
         end
 
         def drop_table # for maintenance
           return unless const_table_name.present?
           self.class.connection.drop_table(const_table_name)
+        end
+
+        def const_translation_table_name
+          "#{const_table_name}_translations"
         end
 
         private
@@ -71,7 +78,7 @@ module Dynamic
         def const_table_prefix
           @const_table_prefix ||= schema.const_table_prefix
         end
-        
+
         def compute_const_table_name
           result = [const_table_prefix, permalink.pluralize.gsub(/\-/,'_')].join('_')
           i = 1
@@ -101,6 +108,27 @@ module Dynamic
           end
         end
 
+        def create_translation_table
+          return unless const_table_name.present? && !self.class.connection.data_sources.include?(const_translation_table_name)
+
+          self.class.connection.create_table("#{const_table_name}_translations") do |t|
+            t.integer :record_id
+            t.index :record_id, name: "index_d_translations_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}"
+            Attribute::Translatable::Base::PRIMITIVE_SUBCLASS_NAMES.each do |n|
+              k = n.constantize
+              for i in 0..(k::MAX_INDEXED_COLUMN - 1)
+                t.send(k.column_type, :"#{k.column_name_prefix}i#{i}", index: true)
+              end
+              for i in 0..(k::MAX_NOT_INDEXED_COLUMN - 1)
+                t.send(k.column_type, :"#{k.column_name_prefix}#{i}", index: false)
+              end
+            end
+            t.timestamps
+            t.string :locale # indexed ?
+          end
+
+        end
+
         def rename_table_for_destruction
           return false unless const_table_name.present?
           self.original_const_table_name = self.const_table_name
@@ -110,6 +138,15 @@ module Dynamic
           result = self.save if result
           return result
         end
+
+        def rename_translation_table_for_destruction
+          return self.class.connection.rename_table("#{original_const_table_name}_translations", const_translation_table_name)
+        end
+
+        module Translation; extend ActiveSupport::Concern
+
+        end
+        include Translation
 
       end
       include DatabaseManagement
@@ -132,7 +169,7 @@ module Dynamic
           end
           return result
         end
-        
+
         def const
           return @const if @const
 
@@ -152,7 +189,7 @@ module Dynamic
         def load_attributes
           self.attrs.each(&:load)
           attrs_ = self.attrs
-          
+
           dynamic_attribute_types = {'id' => 'integer'}
           self.attrs.each do |attr|
             dynamic_attribute_types[attr.name] = attr.class.column_type

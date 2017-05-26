@@ -15,6 +15,7 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.string :const_table_name
       t.string :original_const_table_name
       t.belongs_to :schema, index: true
+      t.timestamps
       t.datetime :deleted_at, index: true
     end
 
@@ -25,9 +26,10 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.belongs_to :klass, index: true
       t.boolean :index, :default => false
       t.string :type, index: true
+      t.timestamps
       t.datetime :deleted_at, index: true
     end
-        
+
     create_table :dynamic_schema_associations do |t|
       t.string :permalink, index: true
       t.string :name
@@ -36,6 +38,7 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.belongs_to :owner_klass, index: true
       t.references :inverse_of, polymorphic: true, index: {name: 'index_dynamic_schema_associations_on_inverse_of_type_and_id'}
       t.string :type, index: true
+      t.timestamps
       t.datetime :deleted_at, index: true
     end
 

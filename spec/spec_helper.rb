@@ -10,6 +10,9 @@ require 'dynamic_record'
 
 require 'database_cleaner'
 
+I18n.available_locales = [:en, :fr]
+Globalize.fallbacks = {:en => [:en, :fr], :fr => [:fr, :en]}
+
 RSpec.configure do |config|
   config.color = true
   config.formatter = :documentation

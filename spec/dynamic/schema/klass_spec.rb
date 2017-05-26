@@ -65,7 +65,7 @@ describe Dynamic::Schema::Klass do
           @schema.klasses.create!(name: 'Person')
         }.to change {
           Dynamic::Schema::Base.connection.data_sources
-        }.by(['d_earth_people'])
+        }.by(['d_earth_people', 'd_earth_people_translations'])
       end
 
     end
@@ -80,7 +80,7 @@ describe Dynamic::Schema::Klass do
           @klass.destroy  # resistance is futil
         }.to change {
           Dynamic::Schema::Base.connection.data_sources
-        }.by(['d_earth_destroyed_people'])
+        }.by(['d_earth_destroyed_people', 'd_earth_destroyed_people_translations'])
       end
 
       it 'should keep track of original table name' do
@@ -104,7 +104,7 @@ describe Dynamic::Schema::Klass do
           @klass.destroy
         }.to change {
           Dynamic::Schema::Base.connection.data_sources
-        }.by(['d_earth_destroyed_people_1'])
+        }.by(['d_earth_destroyed_people_1', 'd_earth_destroyed_people_1_translations'])
       end
 
     end

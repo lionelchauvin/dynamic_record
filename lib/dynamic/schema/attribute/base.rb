@@ -14,11 +14,10 @@ module Dynamic
         module Naming; extend ActiveSupport::Concern
 
           included do
-            Globalize.fallbacks = {:en => [:en, :fr], :fr => [:fr, :en]}
             translates :human_name, :fallbacks_for_empty_translations => true
-            globalize_accessors locales: [:fr, :en], attributes: [:human_name] # human_name_fr, #human_name_en
+            globalize_accessors # human_name_fr, #human_name_en
 
-            before_validation :compute_human_name_en_from_name          
+            before_validation :compute_human_name_en_from_name
             before_validation :compute_name_from_human_name
             validates_uniqueness_of :name, scope: :klass_id
           end
@@ -36,7 +35,8 @@ module Dynamic
 
           def compute_name_from_human_name
             return unless (self.name.blank? && self.human_name.present?) || self.human_name_changed?
-            self.name = self.human_name.underscore.gsub(/\s/, '_')
+            n = self.human_name_en.present? ? self.human_name_en : self.human_name
+            self.name = n.underscore.gsub(/\s/, '_')
           end
 
         end
@@ -66,6 +66,7 @@ module Dynamic
               'Dynamic::Schema::Attribute::Float',
               'Dynamic::Schema::Attribute::Boolean',
             ].freeze
+
           end
 
           class_methods do
@@ -82,6 +83,10 @@ module Dynamic
 
           def column_name
             @column_name ||= "#{self.class.column_name_prefix}#{self.index ? 'i' : ''}#{self.column}"
+          end
+
+          def const_table_name
+            klass.const_table_name
           end
 
           private
@@ -101,7 +106,7 @@ module Dynamic
 
           def nullify_attribute_values
             c = self.class.connection
-            c.execute("UPDATE #{c.quote_table_name(klass.const_table_name)} SET #{c.quote_column_name(column_name)} = NULL;")
+            c.execute("UPDATE #{c.quote_table_name(const_table_name)} SET #{c.quote_column_name(column_name)} = NULL;")
             return true
           end
 
@@ -117,13 +122,18 @@ module Dynamic
           private
 
           def load_accessor_methods
-            klass.const.send(:attribute, name, self.class.column_type.to_sym)
-            attr = self
+            klass.const.send(:attribute, self.name, self.class.column_type.to_sym)
+
+            name = self.name
+            column_name = self.column_name
+
             klass.const.send(:define_method, name) do
-              send(attr.column_name)
+              send(column_name)
             end
+
             klass.const.send(:define_method, "#{name}=") do |value|
-              send("#{attr.column_name}=", value)
+              attribute_will_change!(name) if value != send(column_name)
+              send("#{column_name}=", value)
             end
           end
 

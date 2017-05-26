@@ -15,11 +15,10 @@ module Dynamic
         module Naming; extend ActiveSupport::Concern
 
           included do
-            Globalize.fallbacks = {:en => [:en, :fr], :fr => [:fr, :en]}
-            translates :human_name, :fallbacks_for_empty_translations => true
-            globalize_accessors locales: [:fr, :en], attributes: [:human_name] # human_name_fr, #human_name_en
+            translates :human_name, fallbacks_for_empty_translations: true
+            globalize_accessors # human_name_fr, #human_name_en
 
-            before_validation :compute_human_name_en_from_name          
+            before_validation :compute_human_name_en_from_name
             before_validation :compute_name_from_human_name
           end
 
@@ -40,7 +39,8 @@ module Dynamic
 
           def compute_name_from_human_name
             return unless (self.name.blank? && self.human_name.present?) || self.human_name_changed?
-            self.name = self.human_name.underscore.gsub(/\s/, '_')
+            n = self.human_name_en.present? ? self.human_name_en : self.human_name
+            self.name = n.underscore.gsub(/\s/, '_')
           end
 
         end

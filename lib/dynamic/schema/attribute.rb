@@ -9,6 +9,7 @@ module Dynamic
       autoload :Text, 'dynamic/schema/attribute/text'
       autoload :Phone, 'dynamic/schema/attribute/phone'
       autoload :Siret, 'dynamic/schema/attribute/siret'
+      autoload :Translatable, 'dynamic/schema/attribute/translatable'
     end
   end
 end
