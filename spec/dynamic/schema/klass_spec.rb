@@ -6,7 +6,7 @@ describe Dynamic::Schema::Klass do
   end
 
   describe 'naming' do
-    
+
     describe 'create with a human_name' do
 
       it 'should set a name' do
@@ -120,6 +120,20 @@ describe Dynamic::Schema::Klass do
 
       it 'should still be possible to access to the instance in order to do migration' do
         expect(D::Earth::DestroyedPerson.first).to_not be_nil
+      end
+    end
+
+    describe 'drop tables' do
+      before(:each) do
+        @klass = @schema.klasses.create!(name: 'Person')
+      end
+
+      it 'should remove table, translation table and versioning table' do
+        expect{
+          @klass.drop_tables(true)
+        }.to change{
+          Dynamic::Schema::Base.connection.data_sources.count
+        }.by(-2) # by 3 when versioning is ready
       end
     end
 

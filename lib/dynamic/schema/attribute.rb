@@ -10,6 +10,8 @@ module Dynamic
       autoload :Phone, 'dynamic/schema/attribute/phone'
       autoload :Siret, 'dynamic/schema/attribute/siret'
       autoload :Translatable, 'dynamic/schema/attribute/translatable'
+      autoload :TranslatableString, 'dynamic/schema/attribute/translatable_string'
+      autoload :TranslatableText, 'dynamic/schema/attribute/translatable_text'
     end
   end
 end

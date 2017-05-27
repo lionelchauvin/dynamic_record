@@ -132,4 +132,55 @@ describe Dynamic::Schema::Attribute::Base do
 
   end
 
+  describe 'dirty' do
+
+    context 'D::Earth::City' do
+      before(:each) do
+        @klass = @schema.klasses.create(name: 'City')
+        @klass.attrs.create!(name: 'name', type: 'Dynamic::Schema::Attribute::String')
+        @schema.load
+        @record = D::Earth::City.new
+      end
+
+      it 'should have dirty methods' do
+        expect(@record).to respond_to(:name_changed?)
+      end
+
+      context 'change an attribute' do
+
+        it 'should be marked as changed' do
+          expect{
+            @record.name = 'Berk'
+          }.to change{
+            @record.changes
+          }.from(
+            {}
+          ).to(
+            {"s0"=>[nil, "Berk"], "name"=>[nil, "Berk"]}
+          )
+        end
+
+        context 'revert change' do
+          before(:each) do
+            @record.name = 'Berk'
+          end
+
+          it 'should be marked as changed' do
+            expect{
+              @record.name = nil
+            }.to change{
+              @record.changes
+            }.from(
+              {"s0"=>[nil, "Berk"], "name"=>[nil, "Berk"]}
+            ).to(
+              {}
+            )
+          end
+        end
+      end
+
+    end
+
+  end
+
 end

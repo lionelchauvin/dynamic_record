@@ -27,17 +27,4 @@ describe 'Dynamic::Record::Base' do
 
   end
 
-  context 'change an attribute' do
-
-    it 'should be dirty' do
-      expect(@record).to respond_to(:last_name_changed?)
-      expect{
-        @record.last_name = 'Berk'
-      }.to change{
-        @record.last_name_changed?
-      }
-    end
-
-  end
-
 end

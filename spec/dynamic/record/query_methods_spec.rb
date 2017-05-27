@@ -37,7 +37,7 @@ describe Dynamic::Record::QueryMethods do
   context "with translatable attribute" do
     before(:each) do
       @klass = @schema.klasses.create!(human_name_fr: 'Livre', human_name_en: 'Book')
-      @klass.attrs.create!(human_name_fr: 'titre', human_name_en: 'title', type: 'Dynamic::Schema::Attribute::Translatable::String')
+      @klass.attrs.create!(human_name_fr: 'titre', human_name_en: 'title', type: 'Dynamic::Schema::Attribute::TranslatableString')
       @schema.load
 
       @record1 = D::Earth::Book.create!(title: 'Dune')

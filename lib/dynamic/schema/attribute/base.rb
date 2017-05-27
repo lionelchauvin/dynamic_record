@@ -122,18 +122,25 @@ module Dynamic
           private
 
           def load_accessor_methods
-            klass.const.send(:attribute, self.name, self.class.column_type.to_sym)
-
             name = self.name
             column_name = self.column_name
+            name_was = :"#{self.name}_was"
+            column_name_setter = :"#{self.column_name}="
+
+            klass.const.send(:attribute, self.name, self.class.column_type.to_sym)
 
             klass.const.send(:define_method, name) do
               send(column_name)
             end
 
             klass.const.send(:define_method, "#{name}=") do |value|
-              attribute_will_change!(name) if value != send(column_name)
-              send("#{column_name}=", value)
+              if value != send(column_name)
+                attribute_will_change!(name)
+              end
+              if value == send(name_was)
+                clear_attribute_changes([name])
+              end
+              send(column_name_setter, value)
             end
           end
 
