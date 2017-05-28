@@ -15,15 +15,12 @@ module Dynamic
 
           included do
             translates :human_name, :fallbacks_for_empty_translations => true
+            attribute :human_name, :string
             globalize_accessors # human_name_fr, #human_name_en
 
             before_validation :compute_human_name_en_from_name
             before_validation :compute_name_from_human_name
             validates_uniqueness_of :name, scope: :klass_id
-          end
-
-          def human_name_changed?
-            self.changed.include?('human_name')
           end
 
           private

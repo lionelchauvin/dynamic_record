@@ -18,6 +18,7 @@ module Dynamic
 
         included do
           translates :human_name, fallbacks_for_empty_translations: true
+          attribute :human_name, :string
           globalize_accessors # human_name_fr, #human_name_en
 
           before_validation :compute_human_name_en_from_name
@@ -28,10 +29,6 @@ module Dynamic
 
           acts_as_permalink from: :name, scope: :schema_id
           validates_presence_of :permalink
-        end
-
-        def human_name_changed?
-          self.changed.include?('human_name')
         end
 
         private
@@ -59,6 +56,7 @@ module Dynamic
           after_create :create_table
           before_destroy :rename_table_for_destruction
 
+          include Versioning
           include Translation
         end
 
@@ -116,6 +114,52 @@ module Dynamic
           return result
         end
 
+        module Versioning; extend ActiveSupport::Concern
+
+          included do
+            after_create :create_version_table
+            before_destroy :rename_version_table_for_destruction
+          end
+
+          def const_version_table_name
+            "#{const_table_name}_versions"
+          end
+
+          def drop_tables(do_it = false) # for maintenance
+            super
+            return unless const_version_table_name.present?
+            $stderr.puts "drop #{const_version_table_name}"
+            return unless do_it
+            self.class.connection.drop_table(const_version_table_name)
+          end
+
+          private
+
+          def create_version_table
+            return unless const_table_name.present? && !self.class.connection.data_sources.include?(const_version_table_name)
+
+            index_name = "index_d_versions_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}" # TODO limit to 64
+
+            self.class.connection.create_table(const_version_table_name) do |t|
+              t.integer :item_id
+              t.string   :item_type
+              t.integer  :item_id,   null: false
+              t.string   :event,     null: false
+              t.string   :whodunnit
+              t.text     :object, limit: 1_073_741_823
+              t.text     :object_changes, limit: 1_073_741_823
+              # TODO for MySQL enable fractional seconds precision
+              # https://dev.mysql.com/doc/refman/5.6/en/fractional-seconds.html
+              t.datetime :created_at
+              t.index %i(item_type item_id), name: index_name
+            end
+          end
+
+          def rename_version_table_for_destruction
+            return self.class.connection.rename_table("#{original_const_table_name}_versions", const_version_table_name)
+          end
+        end
+
         module Translation; extend ActiveSupport::Concern
 
           included do
@@ -142,7 +186,7 @@ module Dynamic
 
             self.class.connection.create_table(const_translation_table_name) do |t|
               t.integer :record_id
-              t.index :record_id, name: "index_d_translations_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}"
+              t.index :record_id, name: "index_d_translations_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}"  # TODO limit length to 64
               Attribute::Translatable::PRIMITIVE_SUBCLASS_NAMES.each do |n|
                 k = n.constantize
                 for i in 0..(k::MAX_INDEXED_COLUMN - 1)
@@ -155,7 +199,6 @@ module Dynamic
               t.timestamps
               t.string :locale # indexed ?
             end
-
           end
 
           def rename_translation_table_for_destruction
@@ -170,6 +213,7 @@ module Dynamic
 
         def load
           const
+          load_versioning
           load_attributes
           load_associations
           return @const
@@ -182,6 +226,20 @@ module Dynamic
           else
             result = name
           end
+          return result
+        end
+
+        def load_versioning
+          return nil unless self.versioned?
+          return @versioning_klass if @versioning_klass
+
+          result = Class.new(PaperTrail::Version)
+          result.table_name = const_version_table_name
+          schema.const.const_set("#{const_name}Version", result)
+
+          const.has_paper_trail(class_name: result.name)
+
+          @versioning_klass = result
           return result
         end
 

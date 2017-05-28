@@ -66,8 +66,8 @@ describe Dynamic::Schema::Attribute::Base do
       before(:each) do
         @first_attr = @klass.attrs.create!(name: 'last_name', type: 'Dynamic::Schema::Attribute::String')
         @second_attr = @klass.attrs.create!(name: 'first_name', type: 'Dynamic::Schema::Attribute::String')
+        @schema.load
 
-        @schema.load unless @schema.loaded?
         D::Earth::Person.create(:last_name => 'A')
         D::Earth::Person.create(:last_name => 'B')
       end
@@ -116,7 +116,6 @@ describe Dynamic::Schema::Attribute::Base do
 
     describe 'use all available columns' do
       before(:each) do
-#         raise Dynamic::Schema::Attribute::String::MAX_NOT_INDEXED_COLUMN.inspect
         for i in 0..(Dynamic::Schema::Attribute::String::MAX_NOT_INDEXED_COLUMN - 1) do
           @klass.attrs.create!(name: i.to_s, type: 'Dynamic::Schema::Attribute::String')
         end
@@ -125,57 +124,6 @@ describe Dynamic::Schema::Attribute::Base do
       describe 'create a new attribute' do
         it 'should not be valid' do
           expect(@klass.attrs.create(name: 'droplet', type: 'Dynamic::Schema::Attribute::String')).to_not be_valid
-        end
-      end
-
-    end
-
-  end
-
-  describe 'dirty' do
-
-    context 'D::Earth::City' do
-      before(:each) do
-        @klass = @schema.klasses.create(name: 'City')
-        @klass.attrs.create!(name: 'name', type: 'Dynamic::Schema::Attribute::String')
-        @schema.load
-        @record = D::Earth::City.new
-      end
-
-      it 'should have dirty methods' do
-        expect(@record).to respond_to(:name_changed?)
-      end
-
-      context 'change an attribute' do
-
-        it 'should be marked as changed' do
-          expect{
-            @record.name = 'Berk'
-          }.to change{
-            @record.changes
-          }.from(
-            {}
-          ).to(
-            {"s0"=>[nil, "Berk"], "name"=>[nil, "Berk"]}
-          )
-        end
-
-        context 'revert change' do
-          before(:each) do
-            @record.name = 'Berk'
-          end
-
-          it 'should be marked as changed' do
-            expect{
-              @record.name = nil
-            }.to change{
-              @record.changes
-            }.from(
-              {"s0"=>[nil, "Berk"], "name"=>[nil, "Berk"]}
-            ).to(
-              {}
-            )
-          end
         end
       end
 

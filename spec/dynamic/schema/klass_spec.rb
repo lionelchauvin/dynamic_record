@@ -47,7 +47,7 @@ describe Dynamic::Schema::Klass do
             @klass.update_attributes({human_name_en: 'Contact'})
           }.to_not change {
             @klass.permalink
-          }       
+          }
         end
 
       end
@@ -65,7 +65,11 @@ describe Dynamic::Schema::Klass do
           @schema.klasses.create!(name: 'Person')
         }.to change {
           Dynamic::Schema::Base.connection.data_sources
-        }.by(['d_earth_people', 'd_earth_people_translations'])
+        }.by([
+          'd_earth_people',
+          'd_earth_people_versions',
+          'd_earth_people_translations',
+        ])
       end
 
     end
@@ -80,7 +84,11 @@ describe Dynamic::Schema::Klass do
           @klass.destroy  # resistance is futil
         }.to change {
           Dynamic::Schema::Base.connection.data_sources
-        }.by(['d_earth_destroyed_people', 'd_earth_destroyed_people_translations'])
+        }.by([
+          'd_earth_destroyed_people',
+          'd_earth_destroyed_people_versions',
+          'd_earth_destroyed_people_translations',
+        ])
       end
 
       it 'should keep track of original table name' do
@@ -104,7 +112,11 @@ describe Dynamic::Schema::Klass do
           @klass.destroy
         }.to change {
           Dynamic::Schema::Base.connection.data_sources
-        }.by(['d_earth_destroyed_people_1', 'd_earth_destroyed_people_1_translations'])
+        }.by([
+          'd_earth_destroyed_people_1',
+          'd_earth_destroyed_people_1_versions',
+          'd_earth_destroyed_people_1_translations',
+        ])
       end
 
     end
@@ -133,7 +145,7 @@ describe Dynamic::Schema::Klass do
           @klass.drop_tables(true)
         }.to change{
           Dynamic::Schema::Base.connection.data_sources.count
-        }.by(-2) # by 3 when versioning is ready
+        }.by(-3)
       end
     end
 

@@ -42,5 +42,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "globalize-accessors"
   spec.add_dependency "acts_as_permalink"
   spec.add_dependency "paranoia", ">= 2.2.0"
+  spec.add_dependency "paper_trail", ">= 7.0.0"
 
 end

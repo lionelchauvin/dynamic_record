@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Dynamic::Schema::Association::BelongsTo do
+describe 'Dynamic::Record belongs_to association' do
   before(:each) do
     @schema = Dynamic::Schema::Base.create!(name: 'earth')
     @klass = @schema.klasses.create!(human_name_fr: 'Personne', human_name_en: 'Person')
@@ -9,7 +9,7 @@ describe Dynamic::Schema::Association::BelongsTo do
     @schema.load
   end
 
-  describe 'create through an association' do
+  context 'create through an association' do
     before(:each) do
       @a = D::Earth::Person.create(last_name: 'A')
       expect(@a).to respond_to(:contact)
@@ -26,7 +26,7 @@ describe Dynamic::Schema::Association::BelongsTo do
     end
   end
 
-  describe 'create through an association_id' do
+  context 'create through an association_id' do
     before(:each) do
       @a = D::Earth::Person.create(last_name: 'A')
       @b = D::Earth::Person.create(last_name: 'B')
@@ -45,7 +45,7 @@ describe Dynamic::Schema::Association::BelongsTo do
     end
   end
 
-  describe 'create a DynamicAssociation' do
+  context 'create a DynamicAssociation' do
     before(:each) do
       @a = D::Earth::Person.create(last_name: 'A')
       @b = D::Earth::Person.create(last_name: 'B')
@@ -68,69 +68,6 @@ describe Dynamic::Schema::Association::BelongsTo do
       }.to(@b.id)
     end
 
-  end
-
-  describe 'change an association, the dynamic record' do
-    before(:each) do
-      @a = D::Earth::Person.create(last_name: 'A')
-      @b = D::Earth::Person.create(last_name: 'B')
-      @a.contact = @b
-    end
-
-    it 'should be dirty' do
-      expect(
-        @a.changes.keys
-      ).to include('contact_id')
-      expect(
-        @a.contact_id_changed?
-      ).to eq(true)
-      expect(
-        @a.contact_id_was
-      ).to eq(nil)
-    end
-
-    describe 'reloaded' do
-      before(:each) do
-        @a.reload
-      end
-
-      it 'should reset association' do
-        expect(@a.contact).to eq(nil)
-        expect(@a.contact_id).to eq(nil)
-      end
-
-      it 'should not be dirty' do
-        expect(
-          @a.changes.keys
-        ).to_not include('contact_id')
-        expect(
-          @a.contact_id_changed?
-        ).to eq(false)
-        expect(
-          @a.contact_id_was
-        ).to eq(nil)
-      end
-    end
-  end
-
-  describe 'change an association_id, the dynamic record' do
-    before(:each) do
-      @a = D::Earth::Person.create(last_name: 'A')
-      @b = D::Earth::Person.create(last_name: 'B')
-      @a.contact_id = @b.id
-    end
-    
-    it 'should be dirty' do
-      expect(
-        @a.changes.keys
-      ).to include('contact_id')
-      expect(
-        @a.contact_id_changed?
-      ).to eq(true)
-      expect(
-        @a.contact_id_was
-      ).to eq(nil)
-    end
   end
 
 end

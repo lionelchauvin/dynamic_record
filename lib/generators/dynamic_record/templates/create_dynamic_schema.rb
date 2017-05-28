@@ -15,6 +15,7 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.string :const_table_name
       t.string :original_const_table_name
       t.belongs_to :schema, index: true
+      t.boolean :versioned, default: true
       t.timestamps
       t.datetime :deleted_at, index: true
     end

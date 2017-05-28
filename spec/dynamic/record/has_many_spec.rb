@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Dynamic::Schema::Association::HasMany do
+describe 'Dynamic::Record has_many association' do
   before(:each) do
     @schema = Dynamic::Schema::Base.create!(name: 'earth')
     @Person = @schema.klasses.create!(name: 'Person')
@@ -15,7 +15,7 @@ describe Dynamic::Schema::Association::HasMany do
     @schema.load
   end
 
-  describe 'create through an association' do
+  context 'create through an association' do
     before(:each) do
       @a = D::Earth::Person.create(last_name: 'A')
       expect(@a).to respond_to(:documents)
@@ -31,7 +31,7 @@ describe Dynamic::Schema::Association::HasMany do
     end
   end
 
-  describe 'create a DynamicAssociation' do
+  context 'create a DynamicAssociation' do
     before(:each) do
       @a = D::Earth::Person.create(last_name: 'A')
       @d = D::Earth::Document.create(title: 'CV')
@@ -47,14 +47,6 @@ describe Dynamic::Schema::Association::HasMany do
     end
 
     it 'should change association' do      
-# TODO why it doesn't work ?
-#       expect {
-      #         c = D::Earth::DynamicAssociation.create!(association_owner: @a, association_target: @d, schema_association: @has_many)
-#         @a.documents.reload
-#       }.to change {
-#         @a.documents.to_a
-#       }.to([@b])
-#       
       expect {
         c = D::Earth::DynamicAssociation.create!(association_owner: @a, association_target: @d, schema_association: @has_many)
         @a.documents.reload
@@ -65,7 +57,7 @@ describe Dynamic::Schema::Association::HasMany do
 
   end
 
-  describe 'with inverse of, create throuth an assocation' do
+  context 'with inverse of, create throuth an assocation' do
     before(:each) do
       @a = D::Earth::Person.create(last_name: 'A')
       @a.documents.create!(title: 'CV')

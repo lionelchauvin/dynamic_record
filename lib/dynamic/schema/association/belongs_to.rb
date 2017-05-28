@@ -35,6 +35,9 @@ module Dynamic
           def define_accessor_methods
             can = const_association_name
             a = :"#{const_association_name}_associations"
+            can_id = :"#{can}_id"
+            can_id_setter = :"#{can}_id="
+            cached_can = :"cached_#{can}"
 
             self.owner_klass.const.send(:define_method, const_association_name) do
               return @changed_belongs_to[can] if @changed_belongs_to && @changed_belongs_to[can]
@@ -46,16 +49,16 @@ module Dynamic
               @changed_belongs_to[can] = t
 
               @belongs_to_new_record_to_save ||= {}
-              if t.new_record?
+              if t&.new_record?
                 @belongs_to_new_record_to_save[can] = t
               else
                 @belongs_to_new_record_to_save.delete(can)
               end
 
-              self.send("#{can}_id=", t.try(:id))
+              self.send(can_id_setter, t.try(:id))
             end
 
-            self.owner_klass.const.attribute(:"#{const_association_name}_id", :integer)
+            self.owner_klass.const.attribute(can_id, :integer)
 
             self.owner_klass.const.send(:define_method, :"cached_#{const_association_name}") do
               return @cached_belongs_to[can] if @cached_belongs_to && @cached_belongs_to.has_key?(can)
@@ -64,14 +67,18 @@ module Dynamic
               return @cached_belongs_to[can]
             end
 
-            self.owner_klass.const.send(:define_method, :"#{const_association_name}_id") do
+            self.owner_klass.const.send(:define_method, can_id) do
               return @belongs_to_id_to_save[can] if @belongs_to_id_to_save && @belongs_to_id_to_save.has_key?(can)
-              return send("cached_#{can}").try(:id)
+              return send(cached_can).try(:id)
             end
 
-            self.owner_klass.const.send(:define_method, :"#{const_association_name}_id=") do |id|
+            self.owner_klass.const.send(:define_method, can_id_setter) do |id|
               @belongs_to_id_to_save ||= {}
-              attribute_will_change!("#{can}_id") unless id == send(:"cached_#{can}").try(:id)
+              unless id == send(cached_can).try(:id)
+                attribute_will_change!(can_id)
+              else
+                self.clear_attribute_changes([can_id])
+              end
               @belongs_to_id_to_save[can] = id
             end
           end
@@ -109,7 +116,7 @@ module Dynamic
 
             self.owner_klass.const.send(:define_method, :save_records_of_dynamic_belongs_to_associations) do
               return true unless @belongs_to_id_to_save.try(:any?) || @belongs_to_new_record_to_save.try(:any?)
-      
+
               if @belongs_to_new_record_to_save
                 @belongs_to_new_record_to_save.each do |k,r|
                   if r.save
@@ -144,7 +151,7 @@ module Dynamic
           end
 
           module Reloading
-            
+
             def reload
               @belongs_to_id_to_save = {}
               @belongs_to_new_record_to_save = {}

@@ -7,6 +7,7 @@ require 'activemodel-serializers-xml'
 require 'globalize-accessors'
 require 'acts_as_permalink'
 require 'paranoia'
+require 'paper_trail'
 
 module Dynamic
   autoload :Record, 'dynamic/record'
