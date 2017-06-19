@@ -53,54 +53,26 @@ describe 'Dynamic::Record dirty' do
 
   context 'with a translatable attribute' do
     before(:each) do
-      I18n.locale = :fr
       @klass = @schema.klasses.create!(human_name_fr: 'Livre', human_name_en: 'Book')
       @attr = @klass.attrs.create!(human_name_fr: 'titre', human_name_en: 'title', type: 'Dynamic::Schema::Attribute::TranslatableString')
       @schema.load
       @record = D::Earth::Book.new
     end
 
-    context 'changed' do
-
-      it 'should be marked title, title_fr and column_name as changed' do
-        expect{
-          @record.title = 'Berk'
-        }.to change{
-          @record.changes
-        }.from(
-          {}
-        ).to(
-          {"title"=>[nil, "Berk"], "title_fr"=>[nil, "Berk"], "ts0"=>[nil, "Berk"]}
-        )
+    context 'fr locale' do
+      before(:each) do
+        @previous_locale = I18n.locale
+        I18n.locale = :fr
       end
-
-      context 'revert change' do
-        before(:each) do
-          @record.title = 'Berk'
-        end
-
-        it 'should not have  title, title_fr and column_name marked as changed' do
-          expect{
-            @record.title = nil
-          }.to change{
-            @record.changes
-          }.from(
-            {"title"=>[nil, "Berk"], "title_fr"=>[nil, "Berk"], "ts0"=>[nil, "Berk"]}
-          ).to(
-            {}
-          )
-        end
+      after(:each) do
+        I18n.locale = @previous_locale
       end
-
-    end
-
-    describe 'title_fr' do
 
       context 'changed' do
 
-        it 'should be marked title, title_fr and column_name as changed' do
+        it 'should mark title, title_fr and column_name as changed' do
           expect{
-            @record.title_fr = 'Berk'
+            @record.title = 'Berk'
           }.to change{
             @record.changes
           }.from(
@@ -117,7 +89,7 @@ describe 'Dynamic::Record dirty' do
 
           it 'should not have title, title_fr and column_name marked as changed' do
             expect{
-              @record.title_fr = nil
+              @record.title = nil
             }.to change{
               @record.changes
             }.from(
@@ -126,6 +98,93 @@ describe 'Dynamic::Record dirty' do
               {}
             )
           end
+        end
+
+      end
+
+      describe 'title_fr' do
+
+        context 'changed' do
+
+          it 'should mark title, title_fr and column_name as changed' do
+            expect{
+              @record.title_fr = 'Berk'
+            }.to change{
+              @record.changes
+            }.from(
+              {}
+            ).to(
+              {"title"=>[nil, "Berk"], "title_fr"=>[nil, "Berk"], "ts0"=>[nil, "Berk"]}
+            )
+          end
+
+          context 'revert change' do
+            before(:each) do
+              @record.title_fr = 'Berk'
+            end
+
+            it 'should not have title, title_fr and column_name marked as changed' do
+              expect{
+                @record.title_fr = nil
+              }.to change{
+                @record.changes
+              }.from(
+                {"title"=>[nil, "Berk"], "title_fr"=>[nil, "Berk"], "ts0"=>[nil, "Berk"]}
+              ).to(
+                {}
+              )
+            end
+          end
+
+        end
+
+      end
+
+    end
+
+    context 'en locale' do
+      before(:each) do
+        @previous_locale = I18n.locale
+        I18n.locale = :en
+      end
+      after(:each) do
+        I18n.locale = @previous_locale
+      end
+
+      describe 'title_fr' do
+
+        context 'changed' do
+
+          it 'should mark title_fr as changed but not title nor column_name' do
+            expect{
+              @record.title_fr = 'Berk'
+            }.to change{
+              @record.changes
+            }.from(
+              {}
+            ).to(
+              {"title_fr"=>[nil, "Berk"]}
+            )
+          end
+
+          context 'revert change' do
+            before(:each) do
+              @record.title_fr = 'Berk'
+            end
+
+            it 'should not have title, title_fr, title_en and column_name marked as changed' do
+              expect{
+                @record.title_fr = nil
+              }.to change{
+                @record.changes
+              }.from(
+                {"title_fr"=>[nil, "Berk"]}
+              ).to(
+                {}
+              )
+            end
+          end
+
         end
 
       end

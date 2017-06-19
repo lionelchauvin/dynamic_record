@@ -14,6 +14,8 @@ module Dynamic
 
       validates_presence_of :schema
 
+      accepts_nested_attributes_for :attrs, :associations, allow_destroy: true
+
       module Naming; extend ActiveSupport::Concern
 
         included do
@@ -138,9 +140,11 @@ module Dynamic
           def create_version_table
             return unless const_table_name.present? && !self.class.connection.data_sources.include?(const_version_table_name)
 
-            index_name = "index_d_versions_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}" # TODO limit to 64
+            index_name_for_item = "index_d_versions_item_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}" # TODO limit to 64
+            index_name_for_transation = "index_d_versions_transaction_#{self.class.base_class.name.gsub(/\//, '_').underscore}_#{self.id}" # TODO limit to 64
 
             self.class.connection.create_table(const_version_table_name) do |t|
+              t.integer :transaction_id
               t.integer :item_id
               t.string   :item_type
               t.integer  :item_id,   null: false
@@ -151,7 +155,8 @@ module Dynamic
               # TODO for MySQL enable fractional seconds precision
               # https://dev.mysql.com/doc/refman/5.6/en/fractional-seconds.html
               t.datetime :created_at
-              t.index %i(item_type item_id), name: index_name
+              t.index %i(item_type item_id), name: index_name_for_item
+              t.index [:transaction_id], name: index_name_for_transation
             end
           end
 
@@ -236,7 +241,6 @@ module Dynamic
           result = Class.new(PaperTrail::Version)
           result.table_name = const_version_table_name
           schema.const.const_set("#{const_name}Version", result)
-
           const.has_paper_trail(class_name: result.name)
 
           @versioning_klass = result
@@ -274,7 +278,7 @@ module Dynamic
 
           dynamic_mapping = {}
           self.attrs.each do |attr|
-            dynamic_mapping[attr.name.to_sym] = attr.column_name.to_sym
+            dynamic_mapping[attr.name] = attr.column_name
           end
 
           const.send(:define_singleton_method, 'dynamic_mapping') do

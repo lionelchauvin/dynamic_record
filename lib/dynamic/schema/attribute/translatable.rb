@@ -74,24 +74,84 @@ module Dynamic
             klass.const.send(:attribute, localized_attr_name, self.class.column_type.to_sym)
 
             klass.const.send(:define_method, localized_attr_name) do
-              globalize.stash.contains?(locale, attr_name) ? globalize.send(:fetch_stash, locale, attr_name) : globalize.send(:fetch_attribute, locale, attr_name)
+              if globalize.stash.contains?(locale, attr_name)
+                return globalize.send(:fetch_stash, locale, attr_name)
+              else
+                return globalize.send(:fetch_attribute, locale, attr_name)
+              end
             end
 
             klass.const.send(:define_method, "#{localized_attr_name}=") do |value|
               if value != send(localized_attr_name)
                 attribute_will_change!(localized_attr_name)
-                attribute_will_change!(name)
+                if I18n.locale == locale
+                  attribute_will_change!(name)
+                end
               end
               if value == send(localized_attr_name_was)
                 clear_attribute_changes([localized_attr_name, name])
               end
-              write_attribute(attr_name, value, locale: locale)
+              if I18n.locale == locale
+                write_attribute(attr_name, value, locale: locale)
+              end
               translation_for(locale)[attr_name] = value
             end
           end
 
         end
         include Loading
+
+        module Versioning; extend ActiveSupport::Concern
+
+          #paper_trail doesn't retrieve values of globalized attributes before they are changed
+          #see https://github.com/airblade/paper_trail/blob/a3fa278ef72a5d8160a47bf6f5f806ae6a1ed334/lib/paper_trail/record_trail.rb#L39
+          #so we this monkey patch is needed
+          module PaperTrailRecordTrailMonkeyPatch; extend ActiveSupport::Concern
+
+            def attributes_before_change
+              Hash[@record.attributes.map do |k, v|
+                if @record.respond_to?("#{k}_was")
+                  [k, attribute_in_previous_version(k)]
+                else
+                  [k, v]
+                end
+              end]
+            end
+
+          end
+          PaperTrail::RecordTrail.prepend(PaperTrailRecordTrailMonkeyPatch)
+
+          # we don't want reify a translated attribute using the wrong locale
+          # it will be properly reified using accessors of translated attributes (eq. title_en, title_fr)
+          # redefine https://github.com/airblade/paper_trail/blob/a3fa278ef72a5d8160a47bf6f5f806ae6a1ed334/lib/paper_trail/reifier.rb#L102
+          PaperTrail::Reifier.class_eval do
+            class << self
+              def init_unversioned_attrs(attrs, model)
+                exceptions = []
+                if model.respond_to?(:translated_attribute_names)
+                  exceptions = model.translated_attribute_names.map(&:to_s)  # don't init ts0 ts1 ...
+                end
+                (model.attribute_names - attrs.keys - exceptions).each { |k| attrs[k] = nil }
+              end
+            end
+          end
+
+          PaperTrail.serializer = Dynamic::Record::VersionSerializer
+
+        end
+        include Versioning
+
+        def self.translated_column_names_regexp
+          return @translated_column_names_regexp if @translated_column_names_regexp
+
+          exceptions_parts = []
+          Dynamic::Schema::Attribute::Translatable::PRIMITIVE_SUBCLASS_NAMES.each do |klass_name|
+            column_name_prefix = klass_name.constantize.column_name_prefix
+            exceptions_parts << "^#{column_name_prefix}[i]?\\d+$" # eg. ts0, ts1 ...
+          end
+
+          @regexp_for_translated_column_names = Regexp.new(exceptions_parts.join('|'))
+        end
 
       end
     end

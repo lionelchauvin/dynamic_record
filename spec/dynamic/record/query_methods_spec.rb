@@ -5,7 +5,7 @@ describe Dynamic::Record::QueryMethods do
     @schema = Dynamic::Schema::Base.create!(name: 'earth')
   end
 
-  context "without a translatable attribute" do
+  context "an attribute" do
     before(:each) do
       @klass = @schema.klasses.create!(name: 'Person')
       @klass.attrs.create!(name: 'first_name', type: 'Dynamic::Schema::Attribute::String')
@@ -21,6 +21,13 @@ describe Dynamic::Record::QueryMethods do
         expect(D::Earth::Person.where(first_name: 'Charlie')).to include(@record1)
       end
 
+      context 'with a string condition' do
+        it 'should include record' do
+          expect(D::Earth::Person.where(['first_name = ?', 'Charlie'])).to include(@record1)
+          expect(D::Earth::Person.where('first_name IS NOT NULL')).to include(@record1)
+        end
+      end
+
     end
 
     describe 'where.not' do
@@ -34,7 +41,7 @@ describe Dynamic::Record::QueryMethods do
 
   end
 
-  context "with a translatable attribute" do
+  context "a translatable attribute" do
     before(:each) do
       @klass = @schema.klasses.create!(human_name_fr: 'Livre', human_name_en: 'Book')
       @klass.attrs.create!(human_name_fr: 'titre', human_name_en: 'title', type: 'Dynamic::Schema::Attribute::TranslatableString')

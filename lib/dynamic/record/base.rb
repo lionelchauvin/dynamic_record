@@ -34,6 +34,19 @@ module Dynamic
       end
       include Inspector
 
+      def has_dynamic_attribute?(attr_name)
+        # TODO rewrite: precompute an hash
+        !self.class.column_names.include?(attr_name) && !((attr_name.is_a?(Symbol) ? attr_name.to_s : attr_name) =~ Dynamic::Schema::Attribute::Translatable.translated_column_names_regexp)
+      end
+
+      def read_attribute(attr_name)
+        has_dynamic_attribute?(attr_name) ? self.send(attr_name) : super
+      end
+
+      def write_attribute(attr_name, value)
+        has_dynamic_attribute?(attr_name) ? self.send("#{attr_name}=", value) : super
+      end
+
     end
   end
 end

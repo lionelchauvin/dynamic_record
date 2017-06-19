@@ -12,7 +12,6 @@ require 'database_cleaner'
 
 I18n.available_locales = [:en, :fr]
 Globalize.fallbacks = {:en => [:en, :fr], :fr => [:fr, :en]}
-PaperTrail.config.track_associations = false
 
 RSpec.configure do |config|
   config.color = true
