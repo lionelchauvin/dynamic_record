@@ -79,11 +79,7 @@ module Dynamic
         def load(options = {})
           return self unless stale?
           const unless loaded?
-          if options[:with_deleted]
-            klasses.with_deleted.each(&:load)
-          else
-            klasses.each(&:load)
-          end
+          klasses.preloaded(options).each(&:load)
           self.class.loaded_schemas[name] = self
           return self
         end

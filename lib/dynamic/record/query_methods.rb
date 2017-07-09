@@ -26,14 +26,12 @@ module Dynamic
         include Dynamic::Record::QueryMethods::WhereChainNot
       end
 
-      def replace_dynamic_attribute(str)
-        raise 'TODO improve'
-        regexp_mapping = {}
-        self.dynamic_mapping.each do |k,v|
-          regexp_mapping["\\b#{k}\\b"] = v
-        end
-        regexp_for_dynamic_attributes = Regexp.new(regexp_mapping.keys.join('|'))
-        str.gsub!(regexp_for_dynamic_attributes, self.dynamic_mapping)
+      def with_translations_in_fallbacks
+        with_translations([I18n.locale])
+      end
+
+      def replace_dynamic_attributes(str)
+        return str.gsub!(regexp_for_dynamic_attributes, dynamic_mapping) # see dynamic/schema/klass
       end
 
       # overide activerecord/lib/active_record/relation/query_methods.rb#L599
@@ -50,10 +48,10 @@ module Dynamic
 
           case opts
           when String
-            replace_dynamic_attribute(opts)
+            replace_dynamic_attributes(opts)
             return super(opts, *rest)
           when Array
-            replace_dynamic_attribute(opts.first)
+            replace_dynamic_attributes(opts.first)
             return super(opts, *rest)
           when Hash
             opts_ = {}

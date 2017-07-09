@@ -6,6 +6,7 @@ describe 'Dynamic::Record belongs_to association' do
     @klass = @schema.klasses.create!(human_name_fr: 'Personne', human_name_en: 'Person')
     @klass.attrs.create!(name: 'last_name', type: 'Dynamic::Schema::Attribute::String')
     @association_klass = @klass.associations.create!(name: 'contact', type: 'Dynamic::Schema::Association::BelongsTo', target_klass: @klass, :schema => @schema)
+    @schema.klasses.reload
     @schema.load
   end
 

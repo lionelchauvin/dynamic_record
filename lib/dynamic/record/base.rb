@@ -22,6 +22,7 @@ module Dynamic
 
         class_methods do
           def inspect
+            return super unless self.respond_to?(:dynamic_attribute_types)
             string = "#{self.name}("
             fields = self.dynamic_attribute_types.map{|field, type| "#{field}: #{type}"}
             fields << "created_at: datetime"

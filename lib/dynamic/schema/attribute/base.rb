@@ -49,6 +49,7 @@ module Dynamic
             before_validation :init_column
 
             validates_each :column do |record, attr, value|
+              # TODO manage inheritance
               if value && value >= (record.index ? record.class::MAX_INDEXED_COLUMN : record.class::MAX_NOT_INDEXED_COLUMN)
                 record.errors.add attr, 'column limit exceeded'
               end
@@ -93,6 +94,7 @@ module Dynamic
           end
 
           def available_column
+            # TODO manage inheritance
             columns = klass.attrs.with_deleted.where(type: self.type, index: self.index).order(:column).select(:column).map(&:column)
             result = 0
             while columns.include?(result) do
@@ -129,7 +131,6 @@ module Dynamic
             klass.const.send(:define_method, name) do
               send(column_name)
             end
-
             klass.const.send(:define_method, "#{name}=") do |value|
               if value != send(column_name)
                 attribute_will_change!(name)
@@ -139,6 +140,7 @@ module Dynamic
               end
               send(column_name_setter, value)
             end
+
           end
 
         end

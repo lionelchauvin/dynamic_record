@@ -8,6 +8,8 @@ module Dynamic
       self.table_name = 'dynamic_schema_klasses'
 
       belongs_to :schema, inverse_of: :klasses, class_name: 'Dynamic::Schema::Base', touch: true
+      belongs_to :superklass, inverse_of: :subklasses, class_name: 'Dynamic::Schema::Klass'
+      has_many :subklasses, inverse_of: :superklass, class_name: 'Dynamic::Schema::Klass'
       has_many :attrs, inverse_of: :klass, class_name: 'Dynamic::Schema::Attribute::Base', dependent: :destroy
       has_many :associations, inverse_of: :owner_klass,  class_name: 'Dynamic::Schema::Association::Base', foreign_key: :owner_klass_id, dependent: :destroy
       has_many :associations_as_target, inverse_of: :target_klass,  class_name: 'Dynamic::Schema::Association::Base', foreign_key: :target_klass_id, dependent: :destroy
@@ -15,6 +17,32 @@ module Dynamic
       validates_presence_of :schema
 
       accepts_nested_attributes_for :attrs, :associations, allow_destroy: true
+
+      scope :preloaded, -> (options = {}) do
+
+        if options[:with_deleted]
+          result = with_deleted
+        else
+          result = where(nil)
+        end
+        result = result.includes(:attrs, :associations).order('depth asc')
+
+        klasses_by_id = {}
+        result.each do |klass| # note: this prevents additional chained scope
+          klasses_by_id[klass.id] = klass
+        end
+
+        result.each do |klass|
+          klass.superklass = klasses_by_id[klass.superklass_id] if klass.superklass_id
+          klass.associations.each do |a|
+            a.owner_klass = klasses_by_id[a.owner_klass_id]
+            a.target_klass = klasses_by_id[a.target_klass_id]
+            a.schema = klass.schema
+          end
+        end
+
+        result
+      end
 
       module Naming; extend ActiveSupport::Concern
 
@@ -103,6 +131,8 @@ module Dynamic
             t.timestamps
             t.datetime :deleted_at
             t.index :deleted_at
+            t.string :type
+            t.index [:type, :id] # TODO limit index_name length
           end
         end
 
@@ -164,6 +194,40 @@ module Dynamic
             return self.class.connection.rename_table("#{original_const_table_name}_versions", const_version_table_name)
           end
         end
+
+        module Inheritance; extend ActiveSupport::Concern
+
+          included do
+            before_validation :init_depth
+          end
+
+          def depth
+            read_attribute(:depth) || init_depth
+          end
+
+          def baseklass(reload = false)
+            return @baseklass if @baseklass_loaded && !reload
+
+            result = self
+            while result.superklass_id do
+              result = result.superklass
+            end
+
+            @baseklass = result
+            @baseklass_loaded = true
+            return result
+          end
+
+          private
+
+          def init_depth
+            # TODO: globaly update depth
+            return read_attribute(:depth) if read_attribute(:depth)
+            self.depth = self.superklass ? (self.superklass.depth + 1) : 0
+          end
+
+        end
+        include Inheritance
 
         module Translation; extend ActiveSupport::Concern
 
@@ -250,8 +314,14 @@ module Dynamic
         def const
           return @const if @const
 
-          result = Class.new(Dynamic::Record::Base)
-          result.table_name = const_table_name
+          if superklass_id
+            result = Class.new(schema.const.const_get(superklass.const_name))
+          else
+            result = Class.new(Dynamic::Record::Base)
+          end
+
+          result.table_name = baseklass.const_table_name
+
           result.has_many(:dynamic_associations, class_name: schema.const_assoc_klass.name, as: :association_owner)
           result.has_many(:dynamic_associations_as_target, class_name: schema.const_assoc_klass.name, as: :association_target)
 
@@ -265,7 +335,6 @@ module Dynamic
 
         def load_attributes
           self.attrs.each(&:load)
-          attrs_ = self.attrs
 
           dynamic_attribute_types = {'id' => 'integer'}
           self.attrs.each do |attr|
@@ -283,6 +352,21 @@ module Dynamic
 
           const.send(:define_singleton_method, 'dynamic_mapping') do
             return dynamic_mapping
+          end
+
+          define_regexp_for_dynamic_attributes
+        end
+
+        def define_regexp_for_dynamic_attributes
+          regexp_mapping = {}
+          self.attrs.each do |attr|
+            regexp_mapping["\\b#{attr.name}\\b"] = attr.column_name
+          end
+
+          regexp_for_dynamic_attributes = Regexp.new(regexp_mapping.keys.join('|'))
+
+          const.send(:define_singleton_method, 'regexp_for_dynamic_attributes') do
+            return regexp_for_dynamic_attributes
           end
         end
 
