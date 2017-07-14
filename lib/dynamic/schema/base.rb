@@ -6,6 +6,7 @@ module Dynamic
 
       has_many :klasses, inverse_of: :schema, class_name: 'Dynamic::Schema::Klass', foreign_key: :schema_id, dependent: :destroy
       has_many :associations, inverse_of: :schema, class_name: 'Dynamic::Schema::Association::Base', foreign_key: :schema_id, dependent: :destroy
+      has_many :migrations, inverse_of: :schema, class_name: 'Dynamic::Schema::Migration::Base', foreign_key: :schema_id, dependent: :destroy
 
       validates_presence_of :name
 

@@ -129,6 +129,25 @@ describe Dynamic::Schema::Attribute::Base do
 
     end
 
+    describe 'klass and subklasss' do
+      before(:each) do
+        @subklass = @schema.klasses.create!(name: 'Contact', superklass: @klass)
+        @klass_attr = @klass.attrs.create!(name: 'last_name', type: 'Dynamic::Schema::Attribute::String')
+        @subklass_attr = @subklass.attrs.create!(name: 'email', type: 'Dynamic::Schema::Attribute::String')
+      end
+
+      it 'should have the same baseklass' do
+        expect(@klass.baseklass.id).to eq(@klass.id)
+        expect(@subklass.baseklass.id).to eq(@klass.baseklass.id)
+      end
+
+      it 'should share the same shared of columns' do
+        expect(@klass_attr.column).to eq(0)
+        expect(@subklass_attr.column).to eq(1)
+      end
+
+    end
+
   end
 
 end

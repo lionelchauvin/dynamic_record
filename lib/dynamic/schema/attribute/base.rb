@@ -8,6 +8,7 @@ module Dynamic
         self.table_name = 'dynamic_schema_attributes'
 
         belongs_to :klass, inverse_of: :attrs, touch: true
+        belongs_to :baseklass, inverse_of: :baseklass_attrs, class_name: 'Dynamic::Schema::Klass'
 
         validates_presence_of :klass
 
@@ -46,7 +47,9 @@ module Dynamic
             MAX_NOT_INDEXED_COLUMN = 10
 
             validates_presence_of :column
+            before_validation :init_baseklass_id
             before_validation :init_column
+
 
             validates_each :column do |record, attr, value|
               # TODO manage inheritance
@@ -89,13 +92,16 @@ module Dynamic
 
           private
 
+          def init_baseklass_id
+            self.baseklass_id ||= self.klass.baseklass_id
+          end
+
           def init_column
             self.column ||= available_column
           end
 
           def available_column
-            # TODO manage inheritance
-            columns = klass.attrs.with_deleted.where(type: self.type, index: self.index).order(:column).select(:column).map(&:column)
+            columns = klass.baseklass_attrs.with_deleted.where(type: self.type, index: self.index).order(:column).select(:column).map(&:column)
             result = 0
             while columns.include?(result) do
               result += 1

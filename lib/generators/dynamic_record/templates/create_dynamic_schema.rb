@@ -16,6 +16,7 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.string :original_const_table_name
       t.belongs_to :schema, index: true
       t.belongs_to :superklass, index: true
+      t.belongs_to :baseklass, index: true
       t.integer :depth
       t.boolean :versioned, default: true
       t.timestamps
@@ -27,6 +28,7 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.string :name
       t.integer :column
       t.belongs_to :klass, index: true
+      t.belongs_to :baseklass, index: true
       t.boolean :index, :default => false
       t.string :type, index: true
       t.timestamps
@@ -61,6 +63,19 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.integer :dynamic_schema_association_id, index: {name: 'index_dynamic_schema_klass_translations_association_id'}
       t.string :human_name
       t.string :locale
+    end
+
+    create_table :dynamic_schema_migrations  do |t|
+      t.integer :state, default: 0, index: true
+      t.integer :progress, default: 0
+      t.integer :total, default: 1
+      t.belongs_to :klass
+      t.belongs_to :attr
+      t.string :type, index: true
+      t.datetime :started_at
+      t.datetime :finished_at
+      t.timestamps
+      t.datetime :deleted_at, index: true
     end
 
   end

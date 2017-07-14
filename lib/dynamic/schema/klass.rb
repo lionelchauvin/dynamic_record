@@ -8,9 +8,11 @@ module Dynamic
       self.table_name = 'dynamic_schema_klasses'
 
       belongs_to :schema, inverse_of: :klasses, class_name: 'Dynamic::Schema::Base', touch: true
+      belongs_to :baseklass, class_name: 'Dynamic::Schema::Klass'
       belongs_to :superklass, inverse_of: :subklasses, class_name: 'Dynamic::Schema::Klass'
       has_many :subklasses, inverse_of: :superklass, class_name: 'Dynamic::Schema::Klass'
       has_many :attrs, inverse_of: :klass, class_name: 'Dynamic::Schema::Attribute::Base', dependent: :destroy
+      has_many :baseklass_attrs, inverse_of: :baseklass, class_name: 'Dynamic::Schema::Attribute::Base', foreign_key: :baseklass_id, primary_key: :baseklass_id
       has_many :associations, inverse_of: :owner_klass,  class_name: 'Dynamic::Schema::Association::Base', foreign_key: :owner_klass_id, dependent: :destroy
       has_many :associations_as_target, inverse_of: :target_klass,  class_name: 'Dynamic::Schema::Association::Base', foreign_key: :target_klass_id, dependent: :destroy
 
@@ -106,11 +108,15 @@ module Dynamic
         end
 
         def compute_const_table_name
-          result = [const_table_prefix, permalink.pluralize.gsub(/\-/,'_')].join('_')
-          i = 1
-          while self.class.connection.data_sources.include?(result)
-            result = [const_table_prefix, permalink.pluralize.gsub(/\-/,'_'), i].join('_')
-            i += 1
+          if superklass_id
+            result = self.baseklass.const_table_name
+          else
+            result = [const_table_prefix, permalink.pluralize.gsub(/\-/,'_')].join('_')
+            i = 1
+            while self.class.connection.data_sources.include?(result)
+              result = [const_table_prefix, permalink.pluralize.gsub(/\-/,'_'), i].join('_')
+              i += 1
+            end
           end
           self.const_table_name = result
         end
@@ -199,23 +205,21 @@ module Dynamic
 
           included do
             before_validation :init_depth
+            before_validation :compute_baseklass
           end
 
           def depth
             read_attribute(:depth) || init_depth
           end
 
-          def baseklass(reload = false)
-            return @baseklass if @baseklass_loaded && !reload
-
-            result = self
-            while result.superklass_id do
-              result = result.superklass
+          def compute_baseklass
+            if self.superklass_id
+              self.baseklass_id = self.superklass.baseklass_id
+              self.baseklass = self.superklass.baseklass
+            else
+              self.baseklass_id = self.id
+              self.baseklass = self
             end
-
-            @baseklass = result
-            @baseklass_loaded = true
-            return result
           end
 
           private
@@ -320,7 +324,7 @@ module Dynamic
             result = Class.new(Dynamic::Record::Base)
           end
 
-          result.table_name = baseklass.const_table_name
+          result.table_name = self.const_table_name
 
           result.has_many(:dynamic_associations, class_name: schema.const_assoc_klass.name, as: :association_owner)
           result.has_many(:dynamic_associations_as_target, class_name: schema.const_assoc_klass.name, as: :association_target)
