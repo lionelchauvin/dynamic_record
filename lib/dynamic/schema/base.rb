@@ -125,6 +125,12 @@ module Dynamic
           return result
         end
 
+        def unload
+          const.constants.each do |c|
+            const.send(:remove_const, c)
+          end
+        end
+
         module ClassMethods
 
           def loaded_schemas

@@ -69,8 +69,15 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.integer :state, default: 0, index: true
       t.integer :progress, default: 0
       t.integer :total, default: 1
+      t.belongs_to :schema, index: true
       t.belongs_to :klass
       t.belongs_to :attr
+      t.string :source_attribute_type
+      t.integer :source_attribute_column
+      t.boolean :source_attribute_index
+      t.string :target_attribute_type
+      t.integer :target_attribute_column
+      t.boolean :target_attribute_index
       t.string :type, index: true
       t.datetime :started_at
       t.datetime :finished_at
