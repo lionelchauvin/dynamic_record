@@ -326,8 +326,13 @@ module Dynamic
 
           result.table_name = self.const_table_name
 
-          result.has_many(:dynamic_associations, class_name: schema.const_assoc_klass.name, as: :association_owner)
+          result.has_many(:dynamic_associations_as_owner, class_name: schema.const_assoc_klass.name, as: :association_owner)
           result.has_many(:dynamic_associations_as_target, class_name: schema.const_assoc_klass.name, as: :association_target)
+
+          s = schema
+          result.send(:define_method, :dynamic_associations) do
+            s.const_assoc_klass.where("association_owner_id = ? OR association_target_id = ?", self.id, self.id)
+          end
 
           schema.const.const_set(const_name, result)
 

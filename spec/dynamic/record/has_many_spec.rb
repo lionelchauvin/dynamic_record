@@ -3,10 +3,11 @@ require 'spec_helper'
 describe 'Dynamic::Record has_many association' do
   before(:each) do
     @schema = Dynamic::Schema::Base.create!(name: 'earth')
+
     @Person = @schema.klasses.create!(name: 'Person')
     @Person.attrs.create!(name: 'last_name', type: 'Dynamic::Schema::Attribute::String')
 
-    @Document = @schema.klasses.create!(name: 'Document')    
+    @Document = @schema.klasses.create!(name: 'Document')
     @Document.attrs.create!(name: 'title', type: 'Dynamic::Schema::Attribute::String')
 
     @belongs_to = @Document.associations.create!(name: 'owner', type: 'Dynamic::Schema::Association::BelongsTo', target_klass: @Person, schema: @schema)
@@ -24,7 +25,6 @@ describe 'Dynamic::Record has_many association' do
     it 'should create a dynamic_association' do
       expect {
         @a.documents.create!(title: 'CV')
-        @a.dynamic_associations.reload
       }.to change {
         @a.dynamic_associations.length
       }.by(1)
@@ -39,16 +39,16 @@ describe 'Dynamic::Record has_many association' do
 
     it 'should change dynamic_associations' do
       expect {
-        D::Earth::DynamicAssociation.create!(association_owner: @a, association_target: @d, schema_association: @has_many)
+        D::Earth::DynamicAssociation.create!(association_target: @a, association_owner: @d, schema_association: @belongs_to)
         @a.dynamic_associations.reload
       }.to change {
         @a.dynamic_associations.length
       }.by(1)
     end
 
-    it 'should change association' do      
+    it 'should change association' do
       expect {
-        c = D::Earth::DynamicAssociation.create!(association_owner: @a, association_target: @d, schema_association: @has_many)
+        c = D::Earth::DynamicAssociation.create!(association_target: @a, association_owner: @d, schema_association: @belongs_to)
         @a.documents.reload
       }.to change {
         @a.documents.map(&:id)
@@ -60,11 +60,10 @@ describe 'Dynamic::Record has_many association' do
   context 'with inverse of, create throuth an assocation' do
     before(:each) do
       @a = D::Earth::Person.create(last_name: 'A')
-      @a.documents.create!(title: 'CV')
+      @d = @a.documents.create!(title: 'CV')
     end
 
     it 'should set inverse association' do
-      # TODO
       expect(@a.documents.first.owner).to eq(@a)
     end
 

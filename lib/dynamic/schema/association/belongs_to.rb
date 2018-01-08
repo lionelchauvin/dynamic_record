@@ -6,7 +6,7 @@ module Dynamic
         module Loading; extend ActiveSupport::Concern
 
           def load
-            define_an_has_many_that_should_have_only_one_value_in_order_to_fake_a_belongs_to_through
+            define_an_has_one_in_order_to_fake_a_belongs_to_through
             define_accessor_methods
             define_build_method
             define_validation_of_associated_records
@@ -20,28 +20,37 @@ module Dynamic
 
           private
 
-          def define_an_has_many_that_should_have_only_one_value_in_order_to_fake_a_belongs_to_through
+          def define_an_has_one_in_order_to_fake_a_belongs_to_through
             id = self.id
-            t = self.class.base_class.name
-            a = :"#{const_association_name}_associations"
-            self.owner_klass.const.has_many(a, -> {
-              where({ schema_association_id: id, schema_association_type: t })
+            a = :"#{const_association_name}_association"
+            n = self.target_klass.const.name
+
+            self.owner_klass.const.has_one(a, -> {
+              where({ schema_association_id: id })
             },{
               class_name: schema.const_assoc_klass.name,
               as: :association_owner
             })
+
+            self.owner_klass.const.has_one(const_association_name, {
+              class_name: n,
+              through: a,
+              source: :association_target,
+              source_type: n
+            })
+
           end
 
           def define_accessor_methods
             can = const_association_name
-            a = :"#{const_association_name}_associations"
+            a = :"#{const_association_name}_association"
             can_id = :"#{can}_id"
             can_id_setter = :"#{can}_id="
             cached_can = :"cached_#{can}"
 
             self.owner_klass.const.send(:define_method, const_association_name) do
               return @changed_belongs_to[can] if @changed_belongs_to && @changed_belongs_to[can]
-              return send(a).last.try(:association_target)
+              return send(a).try(:association_target)
             end
 
             self.owner_klass.const.send(:define_method, :"#{const_association_name}=") do |t|
@@ -63,7 +72,7 @@ module Dynamic
             self.owner_klass.const.send(:define_method, :"cached_#{const_association_name}") do
               return @cached_belongs_to[can] if @cached_belongs_to && @cached_belongs_to.has_key?(can)
               @cached_belongs_to ||= {}
-              @cached_belongs_to[can] = send(a).last.try(:association_target)
+              @cached_belongs_to[can] = send(a).try(:association_target)
               return @cached_belongs_to[can]
             end
 
@@ -120,12 +129,12 @@ module Dynamic
               if @belongs_to_new_record_to_save
                 @belongs_to_new_record_to_save.each do |k,r|
                   if r.save
-                    ca = send(:"#{k}_associations").first
+                    ca = send(:"#{k}_association")
                     if ca
                       ca.association_target = r
                       ca.save
                     else
-                      send(:"#{k}_associations").create(association_target: r)
+                      send(:"create_#{k}_association", association_target: r)
                     end
                   end
                 end
@@ -133,13 +142,13 @@ module Dynamic
 
               if @belongs_to_id_to_save
                 @belongs_to_id_to_save.each do |k, id|
-                  ca = send(:"#{k}_associations").first
+                  ca = send(:"#{k}_association")
                   if ca
                     ca.association_target_id = id
                     ca.association_target_type = t
                     ca.save
                   else
-                    send(:"#{k}_associations").create(association_target_id: id, association_target_type: t)
+                    send(:"create_#{k}_association", association_target_id: id, association_target_type: t)
                   end
                 end
               end
@@ -159,6 +168,7 @@ module Dynamic
               @cached_belongs_to = {}
               super
             end
+
           end
 
           def redefine_reload
@@ -167,7 +177,7 @@ module Dynamic
 
         end
         include Loading
-    
+
       end
 
     end

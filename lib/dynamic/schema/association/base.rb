@@ -10,7 +10,7 @@ module Dynamic
         belongs_to :owner_klass, inverse_of: :associations, class_name: 'Dynamic::Schema::Klass', foreign_key: :owner_klass_id
         belongs_to :target_klass, inverse_of: :associations_as_target, class_name: 'Dynamic::Schema::Klass', foreign_key: :target_klass_id
         belongs_to :schema, inverse_of: :associations, class_name: 'Dynamic::Schema::Base', touch: true
-        belongs_to :inverse_of, polymorphic: true
+        belongs_to :inverse_of, :class_name => self.name
 
         module Naming; extend ActiveSupport::Concern
 

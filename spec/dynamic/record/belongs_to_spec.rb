@@ -64,6 +64,7 @@ describe 'Dynamic::Record belongs_to association' do
     it 'should change association' do
       expect {
         c = D::Earth::DynamicAssociation.create!(association_owner: @a, association_target: @b, schema_association: @association_klass)
+        @a.reload
       }.to change {
         @a.contact.try(:id)
       }.to(@b.id)

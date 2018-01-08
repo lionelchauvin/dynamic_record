@@ -41,7 +41,7 @@ class CreateDynamicSchema < ActiveRecord::Migration[5.0]
       t.belongs_to :schema, index: true
       t.belongs_to :target_klass, index: true
       t.belongs_to :owner_klass, index: true
-      t.references :inverse_of, polymorphic: true, index: {name: 'index_dynamic_schema_associations_on_inverse_of_type_and_id'}
+      t.references :inverse_of, index: {name: 'index_dynamic_schema_associations_on_inverse_id'}
       t.string :type, index: true
       t.timestamps
       t.datetime :deleted_at, index: true
