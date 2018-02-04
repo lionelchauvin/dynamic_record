@@ -10,43 +10,26 @@ module Dynamic
 
             a = :"#{const_association_name}_associations"
 
-            if self.inverse_of_id
+            id = self.id
 
-              id = self.inverse_of_id
-
-              self.owner_klass.const.has_many(a, -> {
-                where({ schema_association_id: id })
-              },{
-                class_name: schema.const_assoc_klass.name,
-                as: :association_target
+            self.owner_klass.const.has_many(a, -> {
+              where({
+                schema_association_id: id,
+                schema_association_type: 'Dynamic::Schema::Association::Base',
               })
+            },{
+              class_name: schema.const_assoc_klass.name,
+              as: :association_owner,
+            })
 
-              self.owner_klass.const.has_many(const_association_name, {
-                class_name: n,
-                through: a,
-                source: :association_owner,
-                source_type: n
-              })
+            has_many_args = {
+              class_name: n,
+              through: a,
+              source: :association_target,
+              source_type: n,
+            }
 
-            else
-
-              id = self.id
-
-              self.owner_klass.const.has_many(a, -> {
-                where({ schema_association_id: id })
-              },{
-                class_name: schema.const_assoc_klass.name,
-                as: :association_owner
-              })
-
-              self.owner_klass.const.has_many(const_association_name, {
-                class_name: n,
-                through: a,
-                source: :association_target,
-                source_type: n
-              })
-
-            end
+            self.owner_klass.const.has_many(const_association_name, has_many_args)
 
           end
 

@@ -37,6 +37,16 @@ module Dynamic
             t.references :association_target, polymorphic: true, index: {name: "index_#{self.id}_da_association_target"}
             t.references :schema_association, polymorphic: true, index: {name: "index_#{self.id}_da_schema_association"}
             t.datetime :deleted_at, index: {name: "index_#{self.id}_da_deleted_at"}
+            t.index([
+              :association_owner_id,
+              :association_owner_type,
+              :association_target_id,
+              :association_target_type,
+              :schema_association_id,
+              :schema_association_type,
+              :deleted_at,
+              :type,
+            ], unique: true, name: "index_#{self.id}_da_unicity")
           end
           # TODO add multiple index
         end

@@ -26,17 +26,20 @@ module Dynamic
             n = self.target_klass.const.name
 
             self.owner_klass.const.has_one(a, -> {
-              where({ schema_association_id: id })
+              where({
+                schema_association_id: id,
+                schema_association_type: 'Dynamic::Schema::Association::Base',
+              })
             },{
               class_name: schema.const_assoc_klass.name,
-              as: :association_owner
+              as: :association_owner,
             })
 
             self.owner_klass.const.has_one(const_association_name, {
               class_name: n,
               through: a,
               source: :association_target,
-              source_type: n
+              source_type: n,
             })
 
           end
