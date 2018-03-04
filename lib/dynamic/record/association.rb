@@ -9,8 +9,12 @@ module Dynamic
       belongs_to :association_target, inverse_of: :dynamic_associations_as_target, polymorphic: true
       belongs_to :schema_association, polymorphic: true, class_name: 'Dynamic::Schema::Association::Base'
 
-      def self.compute_type(name) # hack for create through associations properly
-        self
+      class << self
+        def compute_type(name) # hack for create through associations properly
+          self
+        end
+
+        attr_accessor :has_inverse # set when schema is loaded (prevent additional queries when create/destroy inverse)
       end
 
       validates_uniqueness_of :association_owner_id, scope: [
@@ -30,23 +34,26 @@ module Dynamic
       def create_inverse
         self.class.create({
           association_owner: association_target,
-          association_target: association_owner,
-          schema_association: schema_association.inverse_of,
+          association_target_id: association_owner_id,
+          association_target_type: association_owner_type,
+          schema_association_id: self.class.has_inverse[schema_association_id],
+          schema_association_type: 'Dynamic::Schema::Association::Base',
           skip_inverse: true, # cut circular inverse creation
         })
       end
 
       def destroy_inverse
-        self.class.destroy_all({
+        self.class.where({
           association_owner: association_target,
-          association_target: association_owner,
-          schema_association: schema_association.inverse_of,
-          skip_inverse: true, # cut circular inverse destruction
-        })
+          association_target_id: association_owner_id,
+          association_target_type: association_owner_type,
+          schema_association_id: self.class.has_inverse[schema_association_id],
+          schema_association_type: 'Dynamic::Schema::Association::Base',
+        }).destroy_all
       end
 
       def has_inverse?
-        !skip_inverse && schema_association&.inverse_of_id
+        !skip_inverse && self.class.has_inverse && self.class.has_inverse[schema_association_id]
       end
 
     end

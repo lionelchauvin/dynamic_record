@@ -96,7 +96,30 @@ describe 'Dynamic::Record has_many association' do
       it 'should set inverse association' do
         expect(@a.documents.first.owner).to eq(@a)
       end
+
+      context 'destroy' do
+        before(:each) do
+          @a.documents.destroy(@d)
+        end
+
+        it 'should destroy inverse association' do
+          expect(@d.owner).to be_nil
+        end
+      end
     end
+
+    context 'load/reload association' do
+      before(:each) do
+        @a = D::Earth::Person.create(last_name: 'A')
+        @d = @a.documents.create!(title: 'CV')
+        @a.documents.reload
+      end
+
+      it 'should set inverse association in order to prevent additional queries' do
+        expect{@a.documents[0].owner}.to_not exceed_query_limit(0)
+      end
+    end
+
   end
 
 end

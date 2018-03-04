@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "database_cleaner"
-
+  spec.add_development_dependency "rspec-sqlimit"
   spec.add_development_dependency "sqlite3"
 
   spec.add_dependency "activerecord", ">= 5.0"
@@ -43,5 +43,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency "acts_as_permalink"
   spec.add_dependency "paranoia", ">= 2.2.0"
   spec.add_dependency "paper_trail", ">= 7.0.0"
-
 end

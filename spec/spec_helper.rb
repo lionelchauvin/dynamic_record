@@ -7,8 +7,8 @@ ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
 load File.dirname(__FILE__) + '/schema.rb'
 
 require 'dynamic_record'
-
 require 'database_cleaner'
+require 'rspec-sqlimit'
 
 I18n.available_locales = [:en, :fr]
 Globalize.fallbacks = {:en => [:en, :fr], :fr => [:fr, :en]}

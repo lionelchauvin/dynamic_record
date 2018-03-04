@@ -49,7 +49,8 @@ module Dynamic
         module Loading; extend ActiveSupport::Concern
 
           def load
-            fail 'abstract class'
+            schema.const_assoc_klass.has_inverse ||= {}
+            schema.const_assoc_klass.has_inverse[self.id] = self.inverse_of_id
           end
 
         end

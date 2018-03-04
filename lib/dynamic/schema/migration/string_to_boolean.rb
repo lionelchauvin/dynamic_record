@@ -16,6 +16,16 @@ module Dynamic
           end
         end
 
+        def start
+          update_attributes(total: self.class.connection.select_value("SELECT COUNT (*) FROM #{_q(attr.klass.const_table_name)}")
+          super
+        end
+
+        def finish
+          update_attributes(progress: total)
+          super
+        end
+
         private
 
         def mapping_sql

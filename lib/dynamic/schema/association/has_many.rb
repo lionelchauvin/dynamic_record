@@ -6,6 +6,8 @@ module Dynamic
         module Loading; extend ActiveSupport::Concern
 
           def load
+            super
+
             n = self.target_klass.const.name
 
             a = :"#{const_association_name}_associations"
@@ -30,7 +32,6 @@ module Dynamic
             }
 
             self.owner_klass.const.has_many(const_association_name, has_many_args)
-
           end
 
           def const_association_name

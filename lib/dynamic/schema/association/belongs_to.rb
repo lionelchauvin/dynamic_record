@@ -6,6 +6,8 @@ module Dynamic
         module Loading; extend ActiveSupport::Concern
 
           def load
+            super
+
             define_an_has_one_in_order_to_fake_a_belongs_to_through
             define_accessor_methods
             define_build_method
